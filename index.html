@@ -58,6 +58,9 @@
     .chart-meta{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:20px}
     .chart-meta strong{font-size:11px;letter-spacing:.08em;text-transform:uppercase}
     .chart-meta span{font-size:11px;color:#99a79b}
+    .chart-toolbar{display:flex;justify-content:flex-end;margin-bottom:12px}
+    .fullscreen-button{border:1px solid #dfe8de;border-radius:4px;background:#fffefa;color:#728b74;padding:8px 11px;font-size:10px;font-weight:700}
+    .fullscreen-status{color:#8b514b;font-size:11px;margin:0 0 12px}
     .chart-scroll{overflow:auto;background:#f8faf5;border:1px solid #edf1e9;border-radius:5px;padding:25px 20px}
     .chart-inner{width:max-content;margin:auto}
     .chart-row{display:flex;align-items:center;gap:5px;margin-bottom:5px}
@@ -69,6 +72,9 @@
     .stitch.padding{background:#f1f3ed;color:#c5d0c0;outline:1px dashed #cbd6c7;outline-offset:-1px}
     .chart-caption{display:flex;justify-content:space-between;align-items:center;gap:15px;color:#9ba99b;font-size:10px;margin:16px 0 0;line-height:1.5}
     .start{color:#769177;font-weight:700;white-space:nowrap}
+    #chart-panel:fullscreen{background:var(--white);padding:24px;display:flex;flex-direction:column}
+    #chart-panel:fullscreen .chart-scroll{flex:1;min-height:0}
+    #chart-panel:fullscreen .chart-caption{flex-wrap:wrap}
     .empty{text-align:center;padding:50px 20px;color:#91a192;line-height:1.6}
     .binary{border-top:1px solid var(--line);padding:22px 30px 26px}
     .binary-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
@@ -119,8 +125,8 @@
           </select>
           <p class="helper" id="encoding-help">UTF-8 bytes become 8-bit groups of knit and purl stitches.</p>
           <div class="width-heading"><label for="width">Width of your piece</label><span class="width-value"><output id="width-value" for="width">16</output> stitches</span></div>
-          <input id="width" type="range" min="4" max="48" value="16" aria-describedby="width-help">
-          <div class="range-labels" id="width-help"><span>4 stitches</span><span>48 stitches</span></div>
+          <input id="width" type="range" min="4" max="300" value="16" aria-describedby="width-help">
+          <div class="range-labels" id="width-help"><span>4 stitches</span><span>300 stitches</span></div>
           <div class="width-heading" style="margin-top:24px"><label for="repeats">Message repeats</label><span class="width-value"><output id="repeats-value" for="repeats">1</output> ×</span></div>
           <input id="repeats" type="range" min="1" max="10" value="1" aria-describedby="repeats-help">
           <div class="range-labels" id="repeats-help"><span>1 time</span><span>10 times</span></div>
@@ -143,6 +149,8 @@
           <div class="chart-area">
             <div class="chart-meta"><strong id="view-title">Your stitch chart</strong><span id="dimensions"></span></div>
             <div id="chart-panel" role="tabpanel" aria-labelledby="chart-tab">
+              <div class="chart-toolbar"><button class="fullscreen-button" id="fullscreen" type="button" aria-pressed="false">Open fullscreen</button></div>
+              <p class="fullscreen-status" id="fullscreen-status" role="status" hidden></p>
               <div class="chart-scroll"><div id="chart"></div></div>
               <div class="chart-caption"><span>Read from the bottom up, following the arrows. Dashed stitches are padding.</span><span class="start">Start at bottom right ↗</span></div>
             </div>
@@ -179,6 +187,9 @@
     const dimensions = document.querySelector('#dimensions');
     const copyButton = document.querySelector('#copy');
     const copyStatus = document.querySelector('#copy-status');
+    const chartPanel = document.querySelector('#chart-panel');
+    const fullscreenButton = document.querySelector('#fullscreen');
+    const fullscreenStatus = document.querySelector('#fullscreen-status');
     let binary = '';
     let copyText = '';
 
@@ -297,6 +308,24 @@
     width.addEventListener('input', render);
     repeats.addEventListener('input', render);
     encoding.addEventListener('change', render);
+    fullscreenButton.addEventListener('click', async () => {
+      fullscreenStatus.hidden = true;
+      try {
+        if (document.fullscreenElement === chartPanel) {
+          await document.exitFullscreen();
+        } else {
+          await chartPanel.requestFullscreen();
+        }
+      } catch {
+        fullscreenStatus.textContent = 'Could not change fullscreen mode. Check your browser settings and try again.';
+        fullscreenStatus.hidden = false;
+      }
+    });
+    document.addEventListener('fullscreenchange', () => {
+      const active = document.fullscreenElement === chartPanel;
+      fullscreenButton.textContent = active ? 'Exit fullscreen' : 'Open fullscreen';
+      fullscreenButton.setAttribute('aria-pressed', String(active));
+    });
     const tabs = [...document.querySelectorAll('[role=tab]')];
     function selectTab(tab) {
       tabs.forEach(item => {
