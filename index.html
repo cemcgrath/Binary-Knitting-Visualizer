@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Knit Code — words into stitches</title>
+  <style>
+    :root{--ink:#233d36;--muted:#75877d;--paper:#f8f8f1;--line:#e4e9df;--sage:#dfe9dc;--green:#456b53;--purl:#9ab698;--yellow:#e4c783;--white:#fffefa}
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--paper);color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:14px}
+    button,input,textarea,select{font:inherit}
+    select{width:100%;border:1px solid #dfe7dd;border-radius:5px;background:#fbfcf8;color:var(--ink);padding:11px;margin-bottom:8px}
+    button{cursor:pointer}
+    .wrap{max-width:1480px;margin:auto;padding:0 6%}
+    header{height:83px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between}
+    .brand{display:flex;align-items:center;gap:11px;font-weight:800;letter-spacing:.13em;font-size:14px}
+    .brand-icon{height:32px;width:32px;background:var(--ink);color:#fff;border-radius:50%;display:grid;place-items:center;font-family:Georgia,serif;font-size:18px;letter-spacing:0}
+    .top-note{color:#8a9a8f;font-size:11px;text-transform:uppercase;letter-spacing:.16em;font-weight:700}
+    main{padding-top:55px;padding-bottom:70px}
+    .intro{display:flex;align-items:end;justify-content:space-between;gap:30px;margin-bottom:38px}
+    .eyebrow{font-size:10px;font-weight:800;letter-spacing:.2em;color:#819788;text-transform:uppercase;display:flex;align-items:center;gap:10px}
+    .eyebrow:before{content:"";width:25px;height:1px;background:#a5bba8}
+    h1{font-family:Georgia,"Times New Roman",serif;font-size:clamp(39px,4.2vw,62px);font-weight:400;letter-spacing:-.05em;line-height:1.04;margin:16px 0 12px}
+    h1 em{color:#91aa8d;font-weight:400}
+    .intro p{margin:0;color:#7e8d82;font-size:14px;line-height:1.7}
+    .intro-mark{font-family:Georgia,serif;color:#b1c2ad;font-style:italic;font-size:15px;white-space:nowrap;padding-bottom:7px}
+    .layout{display:grid;grid-template-columns:minmax(290px, .82fr) minmax(0, 1.65fr);gap:22px;align-items:start}
+    .card{background:var(--white);border:1px solid #e8ede4;border-radius:8px;box-shadow:0 10px 35px rgba(46,70,53,.035)}
+    .controls{padding:27px}
+    .section-label{font-size:10px;text-transform:uppercase;letter-spacing:.16em;font-weight:800;color:#9aaa9c}
+    .section-title{font-family:Georgia,serif;font-size:24px;letter-spacing:-.035em;font-weight:400;margin:8px 0 25px}
+    label{display:block;font-weight:700;font-size:12px;margin-bottom:9px}
+    textarea{display:block;width:100%;height:111px;border:1px solid #dfe7dd;border-radius:5px;background:#fbfcf8;color:var(--ink);padding:14px;resize:vertical;line-height:1.5;outline:none}
+    textarea:focus,input:focus-visible,button:focus-visible,select:focus-visible{outline:2px solid #8eac91;outline-offset:2px}
+    .helper{font-size:11px;color:#99a79b;line-height:1.5;margin:8px 0 26px}
+    .width-heading{display:flex;align-items:center;justify-content:space-between}
+    .width-value{font-size:12px;color:#6b816e;font-weight:700}
+    input[type=range]{accent-color:var(--green);width:100%;margin:12px 0 4px;cursor:pointer}
+    .range-labels{display:flex;justify-content:space-between;font-size:10px;color:#a6b2a6}
+    .divider{height:1px;background:var(--line);margin:27px 0}
+    .key-title{font-size:12px;font-weight:700;margin-bottom:15px}
+    .key-row{display:flex;align-items:center;gap:11px;margin:12px 0}
+    .key-swatch{height:31px;width:31px;border-radius:4px;display:grid;place-items:center;font-family:Georgia,serif;font-size:18px}
+    .key-swatch.knit{background:#edf2e8;color:#8da58b}
+    .key-swatch.purl{background:var(--purl);color:#f5f8ee}
+    .key-name{font-weight:700;font-size:12px}
+    .key-desc{color:#99a79b;font-size:11px;margin-top:3px}
+    .tip{margin-top:24px;background:#f4f6ed;border-radius:5px;padding:14px 15px;color:#809080;line-height:1.55;font-size:11px}
+    .tip strong{color:#637b65}
+    .workspace{overflow:hidden}
+    .workspace-head{padding:27px 30px 21px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .workspace-head .section-title{margin:7px 0 0}
+    .badge{background:#edf3e9;color:#759478;padding:7px 10px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:.03em;white-space:nowrap}
+    .tabs{display:flex;gap:25px;padding:0 30px;border-bottom:1px solid var(--line)}
+    .tab{background:none;border:0;border-bottom:2px solid transparent;padding:13px 0;color:#a1ada2;font-weight:700;font-size:11px}
+    .tab.active{border-color:var(--green);color:var(--ink)}
+    .chart-area{padding:25px 30px 30px}
+    .chart-meta{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:20px}
+    .chart-meta strong{font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+    .chart-meta span{font-size:11px;color:#99a79b}
+    .chart-scroll{overflow:auto;background:#f8faf5;border:1px solid #edf1e9;border-radius:5px;padding:25px 20px}
+    .chart-inner{width:max-content;margin:auto}
+    .chart-row{display:flex;align-items:center;gap:5px;margin-bottom:5px}
+    .row-number{width:24px;text-align:right;padding-right:5px;color:#a2b1a2;font-size:10px;flex-shrink:0}
+    .row-side{width:30px;color:#a2b1a2;font-size:9px;flex-shrink:0;padding-left:4px}
+    .stitch{width:31px;height:31px;display:grid;place-items:center;border-radius:3px;font-family:Georgia,serif;font-size:19px;line-height:1}
+    .stitch.knit{background:#e8efe3;color:#92aa8f}
+    .stitch.purl{background:#9db99b;color:#f5f9ef}
+    .stitch.padding{background:#f1f3ed;color:#c5d0c0;outline:1px dashed #cbd6c7;outline-offset:-1px}
+    .chart-caption{display:flex;justify-content:space-between;align-items:center;gap:15px;color:#9ba99b;font-size:10px;margin:16px 0 0;line-height:1.5}
+    .start{color:#769177;font-weight:700;white-space:nowrap}
+    .empty{text-align:center;padding:50px 20px;color:#91a192;line-height:1.6}
+    .binary{border-top:1px solid var(--line);padding:22px 30px 26px}
+    .binary-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .binary-top h3{margin:0;font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+    .copy{border:1px solid #dfe8de;border-radius:4px;background:#fffefa;color:#728b74;padding:8px 11px;font-size:10px;font-weight:700}
+    .copy:disabled{opacity:.5;cursor:default}
+    .binary p{font-size:11px;color:#a0ada1;margin:7px 0 16px}
+    .bytes{display:flex;flex-wrap:wrap;gap:7px}
+    .byte{background:#f4f7f0;border:1px solid #edf2e9;border-radius:4px;padding:7px 9px;color:#6e8670;font:11px ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.02em}
+    .byte small{font:700 10px ui-sans-serif,system-ui,sans-serif;color:#a3b2a3;margin-right:8px}
+    .instructions{font-size:12px;line-height:1.8}
+    .instruction{padding:12px 0;border-bottom:1px solid #edf1e9}
+    .instruction strong{display:inline-block;min-width:105px;color:#607c64}
+    .instruction code{font:12px ui-monospace,SFMono-Regular,Consolas,monospace;color:#4f6a54;overflow-wrap:anywhere}
+    footer{margin-top:28px;display:flex;justify-content:space-between;gap:20px;color:#a0ada1;font-size:10px;line-height:1.5}
+    a{color:#78947b}
+    [hidden]{display:none!important}
+    @media(max-width:800px){.wrap{padding-left:5%;padding-right:5%}main{padding-top:38px}.layout{grid-template-columns:1fr}.intro-mark{display:none}.controls{padding:23px}.workspace-head,.binary{padding-left:22px;padding-right:22px}.tabs{padding:0 22px}.chart-area{padding:23px 15px}.top-note{font-size:9px}footer{flex-direction:column;gap:4px}}
+    @media(max-width:420px){header{height:68px}.top-note{display:none}.chart-meta{align-items:flex-start;flex-direction:column}.stitch{width:27px;height:27px;font-size:17px}.chart-scroll{padding:20px 10px}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand"><span class="brand-icon" aria-hidden="true">⌁</span> KNIT / CODE</div>
+      <div class="top-note">A little language of loops</div>
+    </header>
+    <main>
+      <div class="intro">
+        <div>
+          <div class="eyebrow">Words, woven differently</div>
+          <h1>Make a little <em>meaning.</em></h1>
+          <p>Turn a word, a name, or a secret message into a one-of-a-kind knit pattern.</p>
+        </div>
+        <div class="intro-mark">made with words &amp; wool ✳</div>
+      </div>
+      <div class="layout">
+        <section class="card controls" aria-labelledby="create-title">
+          <div class="section-label">01 / The ingredients</div>
+          <h2 class="section-title" id="create-title">Make it yours</h2>
+          <label for="message">Your message</label>
+          <textarea id="message" maxlength="200" spellcheck="false" placeholder="Type something meaningful…">HELLO</textarea>
+          <p class="helper">Letters, spaces, and punctuation all become stitches. Case matters.</p>
+          <label for="encoding">Message encoding</label>
+          <select id="encoding" aria-describedby="encoding-help">
+            <option value="binary">Binary · 8 stitches per byte</option>
+            <option value="base64">Base64 · 6 stitches per symbol</option>
+          </select>
+          <p class="helper" id="encoding-help">UTF-8 bytes become 8-bit groups of knit and purl stitches.</p>
+          <div class="width-heading"><label for="width">Width of your piece</label><span class="width-value"><output id="width-value" for="width">16</output> stitches</span></div>
+          <input id="width" type="range" min="4" max="48" value="16" aria-describedby="width-help">
+          <div class="range-labels" id="width-help"><span>4 stitches</span><span>48 stitches</span></div>
+          <div class="width-heading" style="margin-top:24px"><label for="repeats">Message repeats</label><span class="width-value"><output id="repeats-value" for="repeats">1</output> ×</span></div>
+          <input id="repeats" type="range" min="1" max="10" value="1" aria-describedby="repeats-help">
+          <div class="range-labels" id="repeats-help"><span>1 time</span><span>10 times</span></div>
+          <p class="helper" style="margin-bottom:0">Repeat the whole message continuously; 1 means no repeat.</p>
+          <div class="divider"></div>
+          <div class="key-title">A simple stitch language</div>
+          <div class="key-row"><span class="key-swatch knit" aria-hidden="true">∨</span><div><div class="key-name">0 &nbsp; / &nbsp; Knit</div><div class="key-desc">A smooth little V</div></div></div>
+          <div class="key-row"><span class="key-swatch purl" aria-hidden="true">–</span><div><div class="key-name">1 &nbsp; / &nbsp; Purl</div><div class="key-desc">A tiny textured bump</div></div></div>
+          <div class="tip"><strong>A note on the chart</strong><br>Stitches are shown from the front of your work. The last row is filled with knit stitches where needed.</div>
+        </section>
+        <section class="card workspace" aria-labelledby="pattern-title">
+          <div class="workspace-head">
+            <div><div class="section-label">02 / Your creation</div><h2 class="section-title" id="pattern-title">The pattern</h2></div>
+            <span class="badge">✳ &nbsp; Made by you</span>
+          </div>
+          <div class="tabs" role="tablist" aria-label="Pattern view">
+            <button class="tab active" id="chart-tab" role="tab" aria-selected="true" aria-controls="chart-panel">Stitch chart</button>
+            <button class="tab" id="instructions-tab" role="tab" aria-selected="false" aria-controls="instructions-panel">Row instructions</button>
+          </div>
+          <div class="chart-area">
+            <div class="chart-meta"><strong id="view-title">Your stitch chart</strong><span id="dimensions"></span></div>
+            <div id="chart-panel" role="tabpanel" aria-labelledby="chart-tab">
+              <div class="chart-scroll"><div id="chart"></div></div>
+              <div class="chart-caption"><span>Read from the bottom up, following the arrows. Dashed stitches are padding.</span><span class="start">Start at bottom right ↗</span></div>
+            </div>
+            <div id="instructions-panel" role="tabpanel" aria-labelledby="instructions-tab" hidden>
+              <div class="tip" style="margin:0 0 12px">For flat knitting: work right-side rows right to left and wrong-side rows left to right. Wrong-side stitches are reversed so the chart appears correctly on the front.</div>
+              <div id="instructions" class="instructions"></div>
+            </div>
+          </div>
+          <div class="binary">
+            <div class="binary-top"><h3>The code behind the knit</h3><button class="copy" id="copy" type="button">Copy binary</button></div>
+            <p id="code-help">Each group is one 8-bit byte, read in order.</p>
+            <p id="base64-text" style="overflow-wrap:anywhere" hidden></p>
+            <div class="bytes" id="bytes"></div>
+            <div id="copy-status" class="helper" role="status" style="margin:8px 0 0"></div>
+          </div>
+        </section>
+      </div>
+      <footer><span>A little bit of code, a little bit of craft.</span><span>Based on <a href="https://www.convertbinary.com/alphabet/" target="_blank" rel="noopener noreferrer">the binary alphabet</a> · Text encoded as UTF-8</span></footer>
+    </main>
+  </div>
+  <script>
+    const message = document.querySelector('#message');
+    const width = document.querySelector('#width');
+    const widthValue = document.querySelector('#width-value');
+    const repeats = document.querySelector('#repeats');
+    const repeatsValue = document.querySelector('#repeats-value');
+    const encoding = document.querySelector('#encoding');
+    const encodingHelp = document.querySelector('#encoding-help');
+    const codeHelp = document.querySelector('#code-help');
+    const base64Text = document.querySelector('#base64-text');
+    const chart = document.querySelector('#chart');
+    const instructions = document.querySelector('#instructions');
+    const bytesContainer = document.querySelector('#bytes');
+    const dimensions = document.querySelector('#dimensions');
+    const copyButton = document.querySelector('#copy');
+    const copyStatus = document.querySelector('#copy-status');
+    let binary = '';
+    let copyText = '';
+
+    function render() {
+      const stitchWidth = Number(width.value);
+      const repeatCount = Number(repeats.value);
+      widthValue.value = stitchWidth;
+      repeatsValue.value = repeatCount;
+      const useBase64 = encoding.value === 'base64';
+      encodingHelp.textContent = useBase64
+        ? 'Each Base64 symbol becomes 6 stitches. The message bits stay the same, with up to 4 trailing knit stitches added per repeat to complete a symbol. Each repeat encodes the message separately.'
+        : 'UTF-8 bytes become 8-bit groups of knit and purl stitches.';
+      codeHelp.textContent = useBase64
+        ? 'Each group is a Base64 symbol’s 6-bit value (A–Z, a–z, 0–9, +, /). The = markers are not stitches; trailing zero bits are included.'
+        : 'Each group is one 8-bit byte, read in order.';
+      copyButton.textContent = useBase64 ? 'Copy stitch bits' : 'Copy binary';
+      base64Text.hidden = !useBase64;
+      const messageBytes = [];
+      if (useBase64) {
+        const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+        const encoded = btoa(Array.from(new TextEncoder().encode(message.value), byte => String.fromCharCode(byte)).join(''));
+        base64Text.textContent = encoded ? `Base64 for one message: ${encoded}` : '';
+        for (const symbol of encoded.replace(/=+$/, '')) {
+          messageBytes.push({ label: symbol, bits: alphabet.indexOf(symbol).toString(2).padStart(6, '0') });
+        }
+      } else {
+        for (const character of message.value) {
+          const encoded = new TextEncoder().encode(character);
+          for (const byte of encoded) {
+            messageBytes.push({ label: character === ' ' ? 'space' : character === '\n' ? '↵' : character, bits: byte.toString(2).padStart(8, '0') });
+          }
+        }
+      }
+      const bytes = Array.from({ length: repeatCount }, () => messageBytes).flat();
+      binary = bytes.map(byte => byte.bits).join('');
+      copyText = bytes.map(byte => byte.bits).join(' ');
+      copyButton.disabled = !binary;
+      copyStatus.textContent = '';
+      bytesContainer.replaceChildren();
+      for (const byte of bytes) {
+        const chip = document.createElement('span');
+        chip.className = 'byte';
+        const label = document.createElement('small');
+        label.textContent = byte.label;
+        chip.append(label, document.createTextNode(byte.bits));
+        bytesContainer.append(chip);
+      }
+      chart.replaceChildren();
+      instructions.replaceChildren();
+      if (!binary) {
+        dimensions.textContent = '0 stitches · 0 rows';
+        chart.className = 'empty';
+        chart.textContent = 'Your stitches will appear here. Start by adding a message.';
+        instructions.className = 'instructions empty';
+        instructions.textContent = 'Add a message to make your pattern.';
+        return;
+      }
+      chart.className = 'chart-inner';
+      instructions.className = 'instructions';
+      const rowCount = Math.ceil(binary.length / stitchWidth);
+      const padding = rowCount * stitchWidth - binary.length;
+      dimensions.textContent = `${stitchWidth} stitches wide · ${rowCount} ${rowCount === 1 ? 'row' : 'rows'} · ${padding} padding`;
+      const rows = [];
+      for (let rowIndex = 0; rowIndex < rowCount; rowIndex++) {
+        const row = [];
+        for (let column = 0; column < stitchWidth; column++) {
+          const index = rowIndex * stitchWidth + column;
+          row.push({ bit: binary[index] ?? '0', padding: index >= binary.length });
+        }
+        rows.push(row);
+      }
+      for (let rowIndex = rows.length - 1; rowIndex >= 0; rowIndex--) {
+        const rowElement = document.createElement('div');
+        rowElement.className = 'chart-row';
+        const number = document.createElement('span');
+        number.className = 'row-number';
+        number.textContent = rowIndex + 1;
+        rowElement.append(number);
+        const visualRow = rowIndex % 2 === 0 ? [...rows[rowIndex]].reverse() : rows[rowIndex];
+        for (const stitch of visualRow) {
+          const cell = document.createElement('span');
+          cell.className = `stitch ${stitch.bit === '0' ? 'knit' : 'purl'}${stitch.padding ? ' padding' : ''}`;
+          cell.textContent = stitch.bit === '0' ? '∨' : '–';
+          cell.title = stitch.padding ? 'Padding: knit on front' : stitch.bit === '0' ? '0: knit on front' : '1: purl on front';
+          cell.setAttribute('aria-label', cell.title);
+          rowElement.append(cell);
+        }
+        const side = document.createElement('span');
+        side.className = 'row-side';
+        side.textContent = rowIndex % 2 === 0 ? '← RS' : '→ WS';
+        rowElement.append(side);
+        chart.append(rowElement);
+      }
+      rows.forEach((row, index) => {
+        const line = document.createElement('div');
+        line.className = 'instruction';
+        const heading = document.createElement('strong');
+        heading.textContent = `Row ${index + 1} (${index % 2 === 0 ? 'RS' : 'WS'})`;
+        const code = document.createElement('code');
+        code.textContent = row.map(stitch => {
+          const knit = (stitch.bit === '0') !== (index % 2 === 1);
+          return `${knit ? 'K' : 'P'}${stitch.padding ? '*' : ''}`;
+        }).join(' ');
+        line.append(heading, code);
+        instructions.append(line);
+      });
+      if (padding) {
+        const note = document.createElement('p');
+        note.className = 'helper';
+        note.textContent = '* Padding stitch, not part of the message.';
+        instructions.append(note);
+      }
+    }
+
+    message.addEventListener('input', render);
+    width.addEventListener('input', render);
+    repeats.addEventListener('input', render);
+    encoding.addEventListener('change', render);
+    const tabs = [...document.querySelectorAll('[role=tab]')];
+    function selectTab(tab) {
+      tabs.forEach(item => {
+        const active = item === tab;
+        item.classList.toggle('active', active);
+        item.setAttribute('aria-selected', String(active));
+        item.tabIndex = active ? 0 : -1;
+        document.getElementById(item.getAttribute('aria-controls')).hidden = !active;
+      });
+      document.querySelector('#view-title').textContent = tab.id === 'chart-tab' ? 'Your stitch chart' : 'Your row instructions';
+    }
+    tabs.forEach((tab, index) => {
+      tab.addEventListener('click', () => selectTab(tab));
+      tab.addEventListener('keydown', event => {
+        if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+        event.preventDefault();
+        const next = tabs[(index + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length];
+        selectTab(next);
+        next.focus();
+      });
+    });
+    copyButton.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(copyText);
+        copyStatus.textContent = encoding.value === 'base64' ? 'Stitch bits copied.' : 'Binary copied.';
+      } catch {
+        copyStatus.textContent = 'Could not copy. Select the binary above to copy it manually.';
+      }
+    });
+    selectTab(tabs[0]);
+    render();
+  </script>
+</body>
+</html>
