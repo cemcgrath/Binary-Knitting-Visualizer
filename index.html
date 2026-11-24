@@ -117,13 +117,15 @@
           <h2 class="section-title" id="create-title">Make it yours</h2>
           <label for="message">Your message</label>
           <textarea id="message" maxlength="200" spellcheck="false" placeholder="Type something meaningful…">HELLO</textarea>
-          <p class="helper">Letters, spaces, and punctuation all become stitches. Case matters.</p>
+          <p class="helper" id="message-help">Letters, spaces, and punctuation all become stitches. Case matters.</p>
           <label for="encoding">Message encoding</label>
           <select id="encoding" aria-describedby="encoding-help">
             <option value="binary">Binary · 8 stitches per byte</option>
             <option value="base64">Base64 · 6 stitches per symbol</option>
+            <option value="morse">Morse code · dots and dashes</option>
           </select>
           <p class="helper" id="encoding-help">UTF-8 bytes become 8-bit groups of knit and purl stitches.</p>
+          <p class="fullscreen-status" id="encoding-error" role="alert" hidden></p>
           <div class="width-heading"><label for="width">Width of your piece</label><span class="width-value"><output id="width-value" for="width">16</output> stitches</span></div>
           <input id="width" type="range" min="4" max="320" value="16" aria-describedby="width-help">
           <div class="range-labels" id="width-help"><span>4 stitches</span><span>320 stitches</span></div>
@@ -133,8 +135,8 @@
           <p class="helper" style="margin-bottom:0">Repeat the whole message continuously; 1 means no repeat.</p>
           <div class="divider"></div>
           <div class="key-title">A simple stitch language</div>
-          <div class="key-row"><span class="key-swatch knit" aria-hidden="true">∨</span><div><div class="key-name">0 &nbsp; / &nbsp; Knit</div><div class="key-desc">A smooth little V</div></div></div>
-          <div class="key-row"><span class="key-swatch purl" aria-hidden="true">–</span><div><div class="key-name">1 &nbsp; / &nbsp; Purl</div><div class="key-desc">A tiny textured bump</div></div></div>
+          <div class="key-row"><span class="key-swatch knit" aria-hidden="true">∨</span><div><div class="key-name" id="knit-key">0 &nbsp; / &nbsp; Knit</div><div class="key-desc">A smooth little V</div></div></div>
+          <div class="key-row"><span class="key-swatch purl" aria-hidden="true">–</span><div><div class="key-name" id="purl-key">1 &nbsp; / &nbsp; Purl</div><div class="key-desc">A tiny textured bump</div></div></div>
           <div class="tip"><strong>A note on the chart</strong><br>Stitches are shown from the front of your work. The last row is filled with knit stitches where needed.</div>
         </section>
         <section class="card workspace" aria-labelledby="pattern-title">
@@ -179,6 +181,10 @@
     const repeatsValue = document.querySelector('#repeats-value');
     const encoding = document.querySelector('#encoding');
     const encodingHelp = document.querySelector('#encoding-help');
+    const encodingError = document.querySelector('#encoding-error');
+    const messageHelp = document.querySelector('#message-help');
+    const knitKey = document.querySelector('#knit-key');
+    const purlKey = document.querySelector('#purl-key');
     const codeHelp = document.querySelector('#code-help');
     const base64Text = document.querySelector('#base64-text');
     const chart = document.querySelector('#chart');
@@ -192,6 +198,18 @@
     const fullscreenStatus = document.querySelector('#fullscreen-status');
     let binary = '';
     let copyText = '';
+    const morseAlphabet = {
+      A: '.-', B: '-...', C: '-.-.', D: '-..', E: '.', F: '..-.', G: '--.',
+      H: '....', I: '..', J: '.---', K: '-.-', L: '.-..', M: '--', N: '-.',
+      O: '---', P: '.--.', Q: '--.-', R: '.-.', S: '...', T: '-', U: '..-',
+      V: '...-', W: '.--', X: '-..-', Y: '-.--', Z: '--..',
+      0: '-----', 1: '.----', 2: '..---', 3: '...--', 4: '....-', 5: '.....',
+      6: '-....', 7: '--...', 8: '---..', 9: '----.',
+      '.': '.-.-.-', ',': '--..--', '?': '..--..', "'": '.----.', '!': '-.-.--',
+      '/': '-..-.', '(': '-.--.', ')': '-.--.-', '&': '.-...', ':': '---...',
+      ';': '-.-.-.', '=': '-...-', '+': '.-.-.', '-': '-....-', _: '..--.-',
+      '"': '.-..-.', '$': '...-..-', '@': '.--.-.'
+    };
 
     function render() {
       const stitchWidth = Number(width.value);
@@ -199,16 +217,42 @@
       widthValue.value = stitchWidth;
       repeatsValue.value = repeatCount;
       const useBase64 = encoding.value === 'base64';
-      encodingHelp.textContent = useBase64
+      const useMorse = encoding.value === 'morse';
+      messageHelp.textContent = useMorse
+        ? 'Morse code is case-insensitive. Letters, digits, and common punctuation are supported.'
+        : 'Letters, spaces, and punctuation all become stitches. Case matters.';
+      knitKey.textContent = useMorse ? '−  /  Knit' : '0  /  Knit';
+      purlKey.textContent = useMorse ? '.  /  Purl' : '1  /  Purl';
+      encodingHelp.textContent = useMorse
+        ? 'Each dot is a purl and each dash is a knit. Letter and word boundaries add no stitches.'
+        : useBase64
         ? 'Each Base64 symbol becomes 6 stitches. The message bits stay the same, with up to 4 trailing knit stitches added per repeat to complete a symbol. Each repeat encodes the message separately.'
         : 'UTF-8 bytes become 8-bit groups of knit and purl stitches.';
-      codeHelp.textContent = useBase64
+      codeHelp.textContent = useMorse
+        ? 'Each group is a letter or punctuation mark. / marks whitespace; boundaries are not stitches.'
+        : useBase64
         ? 'Each group is a Base64 symbol’s 6-bit value (A–Z, a–z, 0–9, +, /). The = markers are not stitches; trailing zero bits are included.'
         : 'Each group is one 8-bit byte, read in order.';
-      copyButton.textContent = useBase64 ? 'Copy stitch bits' : 'Copy binary';
+      copyButton.textContent = useMorse ? 'Copy Morse code' : useBase64 ? 'Copy stitch bits' : 'Copy binary';
       base64Text.hidden = !useBase64;
       const messageBytes = [];
-      if (useBase64) {
+      const unsupported = [];
+      if (useMorse) {
+        for (const character of message.value) {
+          if (/\s/u.test(character)) {
+            messageBytes.push({ label: character === '\n' ? '↵' : 'space', bits: '', code: '/' });
+          } else {
+            const code = /^[a-z0-9.,?'!/()&:;=+_"$@-]$/i.test(character)
+              ? morseAlphabet[character.toUpperCase()]
+              : undefined;
+            if (code) {
+              messageBytes.push({ label: character, bits: code.replaceAll('.', '1').replaceAll('-', '0'), code });
+            } else {
+              unsupported.push(character);
+            }
+          }
+        }
+      } else if (useBase64) {
         const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
         const encoded = btoa(Array.from(new TextEncoder().encode(message.value), byte => String.fromCharCode(byte)).join(''));
         base64Text.textContent = encoded ? `Base64 for one message: ${encoded}` : '';
@@ -223,9 +267,13 @@
           }
         }
       }
-      const bytes = Array.from({ length: repeatCount }, () => messageBytes).flat();
+      encodingError.hidden = !unsupported.length;
+      encodingError.textContent = unsupported.length
+        ? `Morse code cannot encode: ${[...new Set(unsupported)].join(' ')}. Remove or replace these characters.`
+        : '';
+      const bytes = unsupported.length ? [] : Array.from({ length: repeatCount }, () => messageBytes).flat();
       binary = bytes.map(byte => byte.bits).join('');
-      copyText = bytes.map(byte => byte.bits).join(' ');
+      copyText = bytes.map(byte => useMorse ? byte.code : byte.bits).join(' ');
       copyButton.disabled = !binary;
       copyStatus.textContent = '';
       bytesContainer.replaceChildren();
@@ -234,7 +282,7 @@
         chip.className = 'byte';
         const label = document.createElement('small');
         label.textContent = byte.label;
-        chip.append(label, document.createTextNode(byte.bits));
+        chip.append(label, document.createTextNode(useMorse ? byte.code : byte.bits));
         bytesContainer.append(chip);
       }
       chart.replaceChildren();
@@ -242,9 +290,9 @@
       if (!binary) {
         dimensions.textContent = '0 stitches · 0 rows';
         chart.className = 'empty';
-        chart.textContent = 'Your stitches will appear here. Start by adding a message.';
+        chart.textContent = unsupported.length ? 'Fix the unsupported characters to make your pattern.' : 'Your stitches will appear here. Start by adding a message.';
         instructions.className = 'instructions empty';
-        instructions.textContent = 'Add a message to make your pattern.';
+        instructions.textContent = unsupported.length ? 'Fix the unsupported characters to make your pattern.' : 'Add a message to make your pattern.';
         return;
       }
       chart.className = 'chart-inner';
@@ -273,7 +321,7 @@
           const cell = document.createElement('span');
           cell.className = `stitch ${stitch.bit === '0' ? 'knit' : 'purl'}${stitch.padding ? ' padding' : ''}`;
           cell.textContent = stitch.bit === '0' ? '∨' : '–';
-          cell.title = stitch.padding ? 'Padding: knit on front' : stitch.bit === '0' ? '0: knit on front' : '1: purl on front';
+          cell.title = stitch.padding ? 'Padding: knit on front' : stitch.bit === '0' ? `${useMorse ? 'Dash' : '0'}: knit on front` : `${useMorse ? 'Dot' : '1'}: purl on front`;
           cell.setAttribute('aria-label', cell.title);
           rowElement.append(cell);
         }
@@ -350,9 +398,9 @@
     copyButton.addEventListener('click', async () => {
       try {
         await navigator.clipboard.writeText(copyText);
-        copyStatus.textContent = encoding.value === 'base64' ? 'Stitch bits copied.' : 'Binary copied.';
+        copyStatus.textContent = encoding.value === 'morse' ? 'Morse code copied.' : encoding.value === 'base64' ? 'Stitch bits copied.' : 'Binary copied.';
       } catch {
-        copyStatus.textContent = 'Could not copy. Select the binary above to copy it manually.';
+        copyStatus.textContent = 'Could not copy. Select the code above to copy it manually.';
       }
     });
     selectTab(tabs[0]);
