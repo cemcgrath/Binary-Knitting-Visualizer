@@ -10,4 +10,4 @@ The UI runs entirely in your browser. You can also open `index.html` locally.
 
 Use **Building your message** below **Message repeats** to choose **Right Side only (in the round)** or **Right and Wrong Side (flat)** (the default). Both start at the bottom left, reading left to right. In the round, every round is RS and reads left to right. Flat knitting alternates RS rows left to right with WS rows right to left, continuing the code on both sides; WS instructions reverse knit and purl so the front matches the chart.
 
-Set the piece width from 4 to 300 stitches. Use **Open fullscreen** on the stitch chart to fill your screen; scroll to see charts larger than the display. Select **Exit fullscreen** or press Escape to return.
+Set the piece width from 4 to 320 stitches. Use **Open fullscreen** on the stitch chart to fill your screen; scroll to see charts larger than the display. Select **Exit fullscreen** or press Escape to return.
