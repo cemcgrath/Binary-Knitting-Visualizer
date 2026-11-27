@@ -138,6 +138,12 @@
           <input id="repeats" type="range" min="1" max="10" value="1" aria-describedby="repeats-help">
           <div class="range-labels" id="repeats-help"><span>1 time</span><span>10 times</span></div>
           <p class="helper" style="margin-bottom:0">Repeat the whole message continuously; 1 means no repeat.</p>
+          <label for="building" style="margin-top:24px">Building your message</label>
+          <select id="building" aria-describedby="building-help">
+            <option value="round">Right Side only (in the round)</option>
+            <option value="flat" selected>Right and Wrong Side (flat)</option>
+          </select>
+          <p class="helper" id="building-help" style="margin-bottom:0">Start left to right, then alternate right-side and wrong-side rows.</p>
           <div class="divider"></div>
           <div class="key-title">A simple stitch language</div>
           <div class="key-row"><span class="key-swatch knit" aria-hidden="true">∨</span><div><div class="key-name" id="knit-key">0 &nbsp; / &nbsp; Knit</div><div class="key-desc">A smooth little V</div></div></div>
@@ -163,10 +169,10 @@
               <div class="chart-toolbar"><button class="fullscreen-button" id="fullscreen" type="button" aria-pressed="false">Open fullscreen</button></div>
               <p class="fullscreen-status" id="fullscreen-status" role="status" hidden></p>
               <div class="chart-scroll"><div id="chart"></div></div>
-              <div class="chart-caption"><span>Read from the bottom up, following the arrows. Dashed stitches are padding.</span><span class="start">Start at bottom right ↗</span></div>
+              <div class="chart-caption"><span>Read from the bottom up, following the arrows. Dashed stitches are padding.</span><span class="start">Start at bottom left ↗</span></div>
             </div>
             <div id="instructions-panel" role="tabpanel" aria-labelledby="instructions-tab" hidden>
-              <div class="tip" style="margin:0 0 12px">For flat knitting: work right-side rows right to left and wrong-side rows left to right. Wrong-side stitches are reversed so the chart appears correctly on the front.</div>
+              <div class="tip" id="instructions-help" style="margin:0 0 12px">For flat knitting: work right-side rows left to right and wrong-side rows right to left. Wrong-side stitches are reversed so the chart appears correctly on the front.</div>
               <div id="instructions" class="instructions"></div>
             </div>
           </div>
@@ -188,6 +194,9 @@
     const widthValue = document.querySelector('#width-value');
     const repeats = document.querySelector('#repeats');
     const repeatsValue = document.querySelector('#repeats-value');
+    const building = document.querySelector('#building');
+    const buildingHelp = document.querySelector('#building-help');
+    const instructionsHelp = document.querySelector('#instructions-help');
     const encoding = document.querySelector('#encoding');
     const encodingHelp = document.querySelector('#encoding-help');
     const encodingError = document.querySelector('#encoding-error');
@@ -225,6 +234,13 @@
     function render() {
       const stitchWidth = Number(width.value);
       const repeatCount = Number(repeats.value);
+      const inTheRound = building.value === 'round';
+      buildingHelp.textContent = inTheRound
+        ? 'Work every round on the right side, reading left to right.'
+        : 'Start left to right, then alternate right-side and wrong-side rows.';
+      instructionsHelp.textContent = inTheRound
+        ? 'For knitting in the round: every round is right-side. Read each round left to right; stitches are worked as shown on the front.'
+        : 'For flat knitting: work right-side rows left to right and wrong-side rows right to left. Wrong-side stitches are reversed so the chart appears correctly on the front.';
       widthValue.value = stitchWidth;
       repeatsValue.value = repeatCount;
       const useBase64 = encoding.value === 'base64';
@@ -343,7 +359,8 @@
         number.className = 'row-number';
         number.textContent = rowIndex + 1;
         rowElement.append(number);
-        const visualRow = rowIndex % 2 === 0 ? [...rows[rowIndex]].reverse() : rows[rowIndex];
+        const wrongSide = !inTheRound && rowIndex % 2 === 1;
+        const visualRow = wrongSide ? [...rows[rowIndex]].reverse() : rows[rowIndex];
         for (const stitch of visualRow) {
           const cell = document.createElement('span');
           const separator = stitch.bit === 's';
@@ -355,18 +372,19 @@
         }
         const side = document.createElement('span');
         side.className = 'row-side';
-        side.textContent = rowIndex % 2 === 0 ? '← RS' : '→ WS';
+        side.textContent = wrongSide ? '← WS' : '→ RS';
         rowElement.append(side);
         chart.append(rowElement);
       }
       rows.forEach((row, index) => {
+        const wrongSide = !inTheRound && index % 2 === 1;
         const line = document.createElement('div');
         line.className = 'instruction';
         const heading = document.createElement('strong');
-        heading.textContent = `Row ${index + 1} (${index % 2 === 0 ? 'RS' : 'WS'})`;
+        heading.textContent = `${inTheRound ? 'Round' : 'Row'} ${index + 1} (${wrongSide ? 'WS' : 'RS'})`;
         const code = document.createElement('code');
         code.textContent = row.map(stitch => {
-          const knit = (stitch.bit !== '1') !== (index % 2 === 1);
+          const knit = (stitch.bit !== '1') !== wrongSide;
           return `${knit ? 'K' : 'P'}${stitch.bit === 's' ? '[separator]' : ''}${stitch.padding ? '*' : ''}`;
         }).join(' ');
         line.append(heading, code);
@@ -389,6 +407,7 @@
     message.addEventListener('input', render);
     width.addEventListener('input', render);
     repeats.addEventListener('input', render);
+    building.addEventListener('change', render);
     encoding.addEventListener('change', render);
     separatorColor.addEventListener('input', render);
     fullscreenButton.addEventListener('click', async () => {
