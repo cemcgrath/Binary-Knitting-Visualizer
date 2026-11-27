@@ -2,7 +2,7 @@
 
 Turn text into a knitting stitch chart and flat-knitting row instructions. Choose binary, Base64, or Morse code, adjust the width, and repeat your message. For binary and Base64, zeroes are knit stitches and ones are purl stitches as viewed from the front. For Morse code, dashes are knit stitches and dots are purl stitches.
 
-Morse code is case-insensitive and supports English letters, digits, and common punctuation. Whitespace is shown as `/` in the displayed and copied code. Letter and word boundaries do not add stitches, so the chart alone does not preserve those boundaries. Unsupported characters must be removed or replaced before a pattern can be generated.
+Morse code is case-insensitive and supports English letters, digits, and common punctuation. One separator-colored knit stitch separates letters and punctuation, and three separate words. The separator color defaults to light blue and can be changed. Runs of whitespace count as one word boundary; leading and trailing whitespace add no stitches unless they separate message repeats. Whitespace is shown as `/` in the displayed and copied code. Row instructions mark separator stitches with `[separator]`; on wrong-side rows, purl them so they appear knit on the front. Unsupported characters must be removed or replaced before a pattern can be generated.
 
 [Open the knitting visualizer](https://cemcgrath.github.io/Binary-Knitting-Visualizer/)
 

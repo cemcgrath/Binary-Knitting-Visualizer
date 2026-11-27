@@ -43,6 +43,10 @@
     .key-swatch{height:31px;width:31px;border-radius:4px;display:grid;place-items:center;font-family:Georgia,serif;font-size:18px}
     .key-swatch.knit{background:#edf2e8;color:#8da58b}
     .key-swatch.purl{background:var(--purl);color:#f5f8ee}
+    .key-swatch.separator{background:var(--separator-color);color:#233d36}
+    .color-control{display:flex;align-items:center;gap:10px;margin-top:12px}
+    .color-control label{margin:0}
+    .color-control input{width:38px;height:30px;padding:2px;border:1px solid #dfe7dd;border-radius:4px;background:#fffefa;cursor:pointer}
     .key-name{font-weight:700;font-size:12px}
     .key-desc{color:#99a79b;font-size:11px;margin-top:3px}
     .tip{margin-top:24px;background:#f4f6ed;border-radius:5px;padding:14px 15px;color:#809080;line-height:1.55;font-size:11px}
@@ -70,6 +74,7 @@
     .stitch.knit{background:#e8efe3;color:#92aa8f}
     .stitch.purl{background:#9db99b;color:#f5f9ef}
     .stitch.padding{background:#f1f3ed;color:#c5d0c0;outline:1px dashed #cbd6c7;outline-offset:-1px}
+    .stitch.separator{background:var(--separator-color);color:#233d36}
     .chart-caption{display:flex;justify-content:space-between;align-items:center;gap:15px;color:#9ba99b;font-size:10px;margin:16px 0 0;line-height:1.5}
     .start{color:#769177;font-weight:700;white-space:nowrap}
     #chart-panel:fullscreen{background:var(--white);padding:24px;display:flex;flex-direction:column}
@@ -137,6 +142,10 @@
           <div class="key-title">A simple stitch language</div>
           <div class="key-row"><span class="key-swatch knit" aria-hidden="true">∨</span><div><div class="key-name" id="knit-key">0 &nbsp; / &nbsp; Knit</div><div class="key-desc">A smooth little V</div></div></div>
           <div class="key-row"><span class="key-swatch purl" aria-hidden="true">–</span><div><div class="key-name" id="purl-key">1 &nbsp; / &nbsp; Purl</div><div class="key-desc">A tiny textured bump</div></div></div>
+          <div id="separator-controls" hidden>
+            <div class="key-row"><span class="key-swatch separator" aria-hidden="true">∨</span><div><div class="key-name">Separator / Knit</div><div class="key-desc">1 between letters, 3 between words</div></div></div>
+            <div class="color-control"><label for="separator-color">Separator color</label><input id="separator-color" type="color" value="#add8e6"></div>
+          </div>
           <div class="tip"><strong>A note on the chart</strong><br>Stitches are shown from the front of your work. The last row is filled with knit stitches where needed.</div>
         </section>
         <section class="card workspace" aria-labelledby="pattern-title">
@@ -185,6 +194,8 @@
     const messageHelp = document.querySelector('#message-help');
     const knitKey = document.querySelector('#knit-key');
     const purlKey = document.querySelector('#purl-key');
+    const separatorControls = document.querySelector('#separator-controls');
+    const separatorColor = document.querySelector('#separator-color');
     const codeHelp = document.querySelector('#code-help');
     const base64Text = document.querySelector('#base64-text');
     const chart = document.querySelector('#chart');
@@ -218,18 +229,20 @@
       repeatsValue.value = repeatCount;
       const useBase64 = encoding.value === 'base64';
       const useMorse = encoding.value === 'morse';
+      separatorControls.hidden = !useMorse;
+      document.documentElement.style.setProperty('--separator-color', separatorColor.value);
       messageHelp.textContent = useMorse
         ? 'Morse code is case-insensitive. Letters, digits, and common punctuation are supported.'
         : 'Letters, spaces, and punctuation all become stitches. Case matters.';
       knitKey.textContent = useMorse ? '−  /  Knit' : '0  /  Knit';
       purlKey.textContent = useMorse ? '.  /  Purl' : '1  /  Purl';
       encodingHelp.textContent = useMorse
-        ? 'Each dot is a purl and each dash is a knit. Letter and word boundaries add no stitches.'
+        ? 'Each dot is a purl and each dash is a knit. Colored knit stitches separate letters (1) and words (3).'
         : useBase64
         ? 'Each Base64 symbol becomes 6 stitches. The message bits stay the same, with up to 4 trailing knit stitches added per repeat to complete a symbol. Each repeat encodes the message separately.'
         : 'UTF-8 bytes become 8-bit groups of knit and purl stitches.';
       codeHelp.textContent = useMorse
-        ? 'Each group is a letter or punctuation mark. / marks whitespace; boundaries are not stitches.'
+        ? 'Each group is a letter or punctuation mark. / marks whitespace; colored stitches separate letters and words in the chart.'
         : useBase64
         ? 'Each group is a Base64 symbol’s 6-bit value (A–Z, a–z, 0–9, +, /). The = markers are not stitches; trailing zero bits are included.'
         : 'Each group is one 8-bit byte, read in order.';
@@ -272,7 +285,21 @@
         ? `Morse code cannot encode: ${[...new Set(unsupported)].join(' ')}. Remove or replace these characters.`
         : '';
       const bytes = unsupported.length ? [] : Array.from({ length: repeatCount }, () => messageBytes).flat();
-      binary = bytes.map(byte => byte.bits).join('');
+      if (useMorse) {
+        let wordBoundary = false;
+        binary = '';
+        for (const byte of bytes) {
+          if (!byte.bits) {
+            wordBoundary = true;
+          } else {
+            if (binary) binary += wordBoundary ? 'sss' : 's';
+            binary += byte.bits;
+            wordBoundary = false;
+          }
+        }
+      } else {
+        binary = bytes.map(byte => byte.bits).join('');
+      }
       copyText = bytes.map(byte => useMorse ? byte.code : byte.bits).join(' ');
       copyButton.disabled = !binary;
       copyStatus.textContent = '';
@@ -319,9 +346,10 @@
         const visualRow = rowIndex % 2 === 0 ? [...rows[rowIndex]].reverse() : rows[rowIndex];
         for (const stitch of visualRow) {
           const cell = document.createElement('span');
-          cell.className = `stitch ${stitch.bit === '0' ? 'knit' : 'purl'}${stitch.padding ? ' padding' : ''}`;
-          cell.textContent = stitch.bit === '0' ? '∨' : '–';
-          cell.title = stitch.padding ? 'Padding: knit on front' : stitch.bit === '0' ? `${useMorse ? 'Dash' : '0'}: knit on front` : `${useMorse ? 'Dot' : '1'}: purl on front`;
+          const separator = stitch.bit === 's';
+          cell.className = `stitch ${stitch.bit === '1' ? 'purl' : 'knit'}${separator ? ' separator' : ''}${stitch.padding ? ' padding' : ''}`;
+          cell.textContent = stitch.bit === '1' ? '–' : '∨';
+          cell.title = stitch.padding ? 'Padding: knit on front' : separator ? 'Separator: knit on front' : stitch.bit === '0' ? `${useMorse ? 'Dash' : '0'}: knit on front` : `${useMorse ? 'Dot' : '1'}: purl on front`;
           cell.setAttribute('aria-label', cell.title);
           rowElement.append(cell);
         }
@@ -338,12 +366,18 @@
         heading.textContent = `Row ${index + 1} (${index % 2 === 0 ? 'RS' : 'WS'})`;
         const code = document.createElement('code');
         code.textContent = row.map(stitch => {
-          const knit = (stitch.bit === '0') !== (index % 2 === 1);
-          return `${knit ? 'K' : 'P'}${stitch.padding ? '*' : ''}`;
+          const knit = (stitch.bit !== '1') !== (index % 2 === 1);
+          return `${knit ? 'K' : 'P'}${stitch.bit === 's' ? '[separator]' : ''}${stitch.padding ? '*' : ''}`;
         }).join(' ');
         line.append(heading, code);
         instructions.append(line);
       });
+      if (useMorse && binary.includes('s')) {
+        const note = document.createElement('p');
+        note.className = 'helper';
+        note.textContent = '[separator] Use the separator color. These stitches appear as knit on the front.';
+        instructions.append(note);
+      }
       if (padding) {
         const note = document.createElement('p');
         note.className = 'helper';
@@ -356,6 +390,7 @@
     width.addEventListener('input', render);
     repeats.addEventListener('input', render);
     encoding.addEventListener('change', render);
+    separatorColor.addEventListener('input', render);
     fullscreenButton.addEventListener('click', async () => {
       fullscreenStatus.hidden = true;
       try {
